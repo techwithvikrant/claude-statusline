@@ -7,16 +7,17 @@
 set -euo pipefail
 
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
-SRC="$(cd "$(dirname "$0")" && pwd)/statusline-command.sh"
+SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
 DEST="$CLAUDE_DIR/statusline-command.sh"
 SETTINGS="$CLAUDE_DIR/settings.json"
 
 command -v python3 >/dev/null 2>&1 || { echo "error: python3 is required" >&2; exit 1; }
 
 mkdir -p "$CLAUDE_DIR"
-cp "$SRC" "$DEST"
+cp "$SRC_DIR/statusline.py" "$CLAUDE_DIR/statusline.py"
+cp "$SRC_DIR/statusline-command.sh" "$DEST"
 chmod +x "$DEST"
-echo "✓ installed script -> $DEST"
+echo "✓ installed statusline.py + wrapper -> $CLAUDE_DIR"
 
 # Merge the statusLine block into settings.json without clobbering other keys.
 python3 - "$SETTINGS" "$DEST" <<'PY'

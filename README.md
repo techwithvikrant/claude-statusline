@@ -46,49 +46,99 @@ Opus 4.8 │ ctx [██▉░░░░░░░░░] 24% · 240k/1M │ 5h [�
 
 ---
 
-## Install
+## Repository layout
+
+| File | Purpose |
+|------|---------|
+| `statusline.py` | the cross-platform core — reads the JSON on stdin, prints the line. Used by **all** platforms. |
+| `statusline-command.sh` | macOS/Linux wrapper that pipes stdin to `statusline.py`. |
+| `install.sh` / `install.ps1` | one-shot installers for macOS/Linux / Windows. |
+
+```bash
+git clone https://github.com/techwithvikrant/claude-statusline.git
+cd claude-statusline
+```
+
+---
+
+## Install — macOS / Linux
 
 ### Option A — one-line installer (recommended)
 
 ```bash
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
 ./install.sh
 ```
 
-The installer copies `statusline-command.sh` into `~/.claude/` and adds the
+It copies `statusline.py` + `statusline-command.sh` into `~/.claude/` and adds the
 `statusLine` block to `~/.claude/settings.json`, preserving any settings you already
 have. Open a new Claude Code session (or wait for the next render) to see it.
 
 ### Option B — manual
 
-1. **Copy the script** into your Claude config directory and make it executable:
+```bash
+mkdir -p ~/.claude
+cp statusline.py statusline-command.sh ~/.claude/
+chmod +x ~/.claude/statusline-command.sh
+```
 
-   ```bash
-   mkdir -p ~/.claude
-   cp statusline-command.sh ~/.claude/statusline-command.sh
-   chmod +x ~/.claude/statusline-command.sh
+Then add this to `~/.claude/settings.json` (create the file as `{}` if missing; keep
+any existing keys). Use **your own absolute home path** — `~` is not expanded here:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "/Users/YOUR_USERNAME/.claude/statusline-command.sh",
+    "padding": 0
+  }
+}
+```
+
+Tip: print the exact path with `echo "$HOME/.claude/statusline-command.sh"`.
+
+---
+
+## Install — Windows
+
+> Use **Windows Terminal** (not the legacy console) so the Unicode bars and ANSI
+> colors render correctly. Requires Python 3 (`py` or `python` on `PATH`).
+
+### Option A — one-line installer (recommended)
+
+In PowerShell, from the cloned folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+It copies `statusline.py` into `%USERPROFILE%\.claude\` and wires the `statusLine`
+block into `settings.json`, preserving existing settings. No `.sh` is used on Windows —
+Claude Code runs the Python file directly.
+
+### Option B — manual
+
+1. Copy `statusline.py` into your Claude config dir:
+
+   ```powershell
+   New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude" | Out-Null
+   Copy-Item statusline.py "$env:USERPROFILE\.claude\statusline.py"
    ```
 
-2. **Wire it into `~/.claude/settings.json`.** Create the file as `{}` if it doesn't
-   exist, then add the `statusLine` block (keep any existing keys). Use **your own
-   absolute home path** — `~` is not expanded here:
+2. Add this to `%USERPROFILE%\.claude\settings.json` (use your real path; note the
+   **doubled backslashes** required by JSON):
 
    ```json
    {
      "statusLine": {
        "type": "command",
-       "command": "/Users/YOUR_USERNAME/.claude/statusline-command.sh",
+       "command": "py \"C:\\Users\\YOUR_NAME\\.claude\\statusline.py\"",
        "padding": 0
      }
    }
    ```
 
-   Tip: print the exact path with
-   `echo "$HOME/.claude/statusline-command.sh"`.
-
-3. **Verify** the JSON parses and the script runs (see [Testing](#testing)). The
-   status line shows up on the next render.
+   If the `py` launcher isn't available, use `python` instead. Print your exact path
+   with `echo "$env:USERPROFILE\.claude\statusline.py"`.
 
 ---
 
@@ -97,7 +147,7 @@ have. Open a new Claude Code session (or wait for the next render) to see it.
 ### Timezone
 
 Reset times display in **IST (Asia/Kolkata)** by default. To change it, edit one line
-near the top of `statusline-command.sh`:
+near the top of `statusline.py`:
 
 ```python
 IST = ZoneInfo("Asia/Kolkata")      # e.g. "America/New_York", "Europe/London", "UTC"
@@ -160,7 +210,9 @@ response lands.
 
 ## Testing
 
-Pipe a sample payload to the script and confirm it prints two colored lines:
+Pipe a sample payload to the script and confirm it prints two colored lines.
+
+**macOS / Linux:**
 
 ```bash
 echo '{
@@ -178,15 +230,22 @@ echo '{
 }' | ~/.claude/statusline-command.sh
 ```
 
+**Windows (PowerShell):**
+
+```powershell
+'{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"."},"context_window":{"context_window_size":1000000,"used_percentage":24,"current_usage":{"input_tokens":240000}},"rate_limits":{"five_hour":{"used_percentage":62,"resets_at":9999999999},"seven_day":{"used_percentage":40,"resets_at":9999999999}}}' | py "$env:USERPROFILE\.claude\statusline.py"
+```
+
 Expected: line 1 with the model, context bar, and 5h/7d bars; line 2 with the
-directory and (if `$PWD` is a git repo) the branch.
+directory and (if it's a git repo) the branch.
 
 ---
 
 ## Uninstall
 
-1. Remove the `statusLine` block from `~/.claude/settings.json`.
-2. Delete `~/.claude/statusline-command.sh` and `~/.claude/.statusline-cache.json`.
+1. Remove the `statusLine` block from `settings.json`.
+2. Delete `statusline.py` (and `statusline-command.sh` on macOS/Linux) plus
+   `.statusline-cache.json` from your `~/.claude` (`%USERPROFILE%\.claude`) directory.
 
 ---
 
