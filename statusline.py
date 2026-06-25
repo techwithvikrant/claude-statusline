@@ -22,6 +22,15 @@ import os
 import subprocess
 from datetime import datetime, timezone, timedelta
 
+# Force UTF-8 I/O. On Windows, Python defaults stdout to the locale codec
+# (e.g. cp1252), which cannot encode the Unicode bar/block glyphs below and
+# would crash with UnicodeEncodeError — leaving the status line blank.
+for _stream in (sys.stdout, sys.stdin):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # Timezone for reset times. Change "Asia/Kolkata" to your zone, e.g.
 # "America/New_York", "Europe/London", "UTC". On systems without a tz database
 # (some Windows installs) this falls back to a fixed +5:30 offset.
