@@ -241,6 +241,30 @@ directory and (if it's a git repo) the branch.
 
 ---
 
+## Troubleshooting
+
+### Blank status line on Windows
+
+If the status line shows **nothing** on Windows, the script is most likely crashing
+with a `UnicodeEncodeError`. By default, Python on Windows encodes stdout using the
+locale code page (e.g. `cp1252`), which **cannot encode** the Unicode bar/block glyphs
+this script uses (`█ ░ ▍ ⟳ …`). Claude Code then receives no output and renders an
+empty line.
+
+The script forces UTF-8 on stdin/stdout at startup to prevent this, so an up-to-date
+`statusline.py` handles it automatically. To confirm what's happening, run it directly
+and look for a traceback:
+
+```powershell
+'{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"."},"context_window":{"used_percentage":24}}' | py "$env:USERPROFILE\.claude\statusline.py"
+```
+
+A clean run prints the colored status line and exits 0. If you still see a
+`UnicodeEncodeError`, re-run the installer to copy the latest `statusline.py`, and use
+**Windows Terminal** rather than the legacy console host for correct glyph rendering.
+
+---
+
 ## Uninstall
 
 1. Remove the `statusLine` block from `settings.json`.
